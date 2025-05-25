@@ -1,0 +1,22 @@
+﻿@using OrdersShared.POCOs
+
+<div class="drawer-wrapper @(IsOpen ? "slide" : "")">
+    <div class="drawer-mask"></div>
+    <div class="drawer">
+        <div class="p-3">
+            <InputSelect class="form-select" @bind-Value="SelectedCourierId">
+                <option selected disabled>-- Выберите курьера --</option>
+                @foreach (var courier in Couriers ?? new List<Courier>())
+                {
+                    <option class="row" value="@courier.Id">@Helper.GetFullName(courier)</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="p-3">
+            <button class="btn btn-primary" @onclick="FormDeliveryCost">Сформировать стоимость доставки</button>
+            <button class="btn btn-success" @onclick="LinkCourierWithOrder">
+                <span class="oi oi-check"></span>
+            </button>
+        </div>
+    </div>
+</div>

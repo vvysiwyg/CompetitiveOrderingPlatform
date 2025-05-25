@@ -1,0 +1,41 @@
+﻿@page "/couriers"
+
+<AuthorizeView>
+    <Authorized>
+        <PageTitle>Курьеры</PageTitle>
+
+        @if (couriers == null)
+        {
+            <p><em>Загрузка...</em></p>
+        }
+        else
+        {
+            <button class="btn btn-outline-success" @onclick="AddNewCourier">+</button>
+            <button @onclick="DeleteCouriersTest">Test</button>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Фамилия</th>
+                        <th>Имя</th>
+                        <th>Отчество</th>
+                        <th>Email</th>
+                        <th>Процент выполненных доставок</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var courier in couriers ?? new List<OrdersShared.POCOs.Courier>())
+                    {
+                        <CascadingValue Value="@couriers" Name="Couriers">
+                            <CourierComponent Courier="courier" />
+                        </CascadingValue>
+                    }
+                </tbody>
+            </table>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <PageTitle>OrdersWebApp</PageTitle>
+        <h1>Для просмотра содержимого данной страницы необходимо авторизоваться в системе</h1>
+    </NotAuthorized>
+</AuthorizeView>

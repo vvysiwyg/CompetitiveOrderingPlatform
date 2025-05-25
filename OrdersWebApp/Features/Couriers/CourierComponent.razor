@@ -1,0 +1,21 @@
+﻿<tr @onclick="@(e => ToCourierDetail(Courier.Id))">
+    <td>
+        @Courier.Emp?.LastName
+    </td>
+    <td>
+        @Courier.Emp?.FirstName
+    </td>
+    <td>
+        @Courier.Emp?.MiddleName
+    </td>
+    <td>
+        @Courier.Emp?.Email
+    </td>
+    <td>
+        @Helper.GetSuccessOrdersPct(Courier)%
+    </td>
+    <td class="border-start row justify-content-evenly">
+        <button class="btn col-2"><img src="/Imgs/edit-btn-icon.png" class="img-fluid"></button>
+        <button class="btn col-2"><img src="/Imgs/delete-btn-icon.png" class="img-fluid"></button>
+    </td>
+</tr>

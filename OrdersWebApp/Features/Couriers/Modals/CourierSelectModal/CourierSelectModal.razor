@@ -1,0 +1,179 @@
+﻿@inject HubService HubService
+@inject IMediator Mediator
+@inject IJSRuntime JS
+
+@using OrdersWebApp.Features.Hub;
+@using OrdersShared.POCOs;
+@using OrdersShared.Features.Couriers;
+@using OrdersShared.Features.Geolocation;
+@using OrdersShared.Features.Orders;
+
+<div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Выбор курьера</h5>
+                <button type="button" class="btn-close" @onclick="CloseModal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center p-3">
+                    <div class="me-2">
+                        <InputSelect class="form-select" @bind-Value="SelectedOIPId">
+                            <option selected disabled>-- Выберите ПВЗ --</option>
+                            @foreach (var oip in OIPS ?? new List<OrderIssuePoint>())
+                            {
+                                <option class="row" value="@oip.Id">@oip.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" disabled="@(!IsOIPSelected)" @onclick="GetNearestCouriers">Поиск ближайших курьеров</button>
+                    </div>
+                </div>
+                @if(CourierGeolocations != null)
+                {
+                    <div class="p-3">
+                        @foreach(CourierGeolocation courierGeolocation in CourierGeolocations)
+                        {
+                            <CourierSelectOption 
+                                CourierGeolocation="courierGeolocation"
+                                IsDisabled="@(SelectedCourierGeolocation == courierGeolocation)"
+                                OnCourierGeolocationSelected="SelectCourierGeolocation">
+                            </CourierSelectOption>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseModal">Закрыть</button>
+                <button type="button" class="btn btn-primary" disabled="@(!IsCourierGeolocationSelected)" @onclick="CommitSelect">Сохранить выбор</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter, EditorRequired] public int OrderId { get; set; }
+
+    [Parameter, EditorRequired] public EventCallback<LinkCourierWithOrderArgs> OnLinkBtnClick { get; set; }
+
+    public List<OrderIssuePoint> OIPS { get; set; }
+
+    public HashSet<CourierGeolocation> CourierGeolocations { get; set; }
+
+    public IDisposable? GetNearestCouriersSubscription { get; set; }
+
+    public CourierGeolocation SelectedCourierGeolocation { get; set; }
+
+    public string SelectedOIPId 
+    {
+        get
+        {
+            return _selectedOIPId;
+        }
+        set
+        {
+            if(value == null)
+            {
+                _selectedOIPId = string.Empty;
+                return;
+            }
+
+            _selectedOIPId = value;
+
+            if(value != string.Empty)
+            {
+                IsOIPSelected = true;
+                StateHasChanged();
+            }
+        }
+    }
+
+    public bool IsOIPSelected { get; set; }
+
+    public bool IsCourierGeolocationSelected { get; set; }
+
+    public double DeliverySum { get; set; }
+
+    private string _selectedOIPId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // CourierGeolocations = new HashSet<CourierGeolocation>()
+        // {
+        //     new CourierGeolocation()
+        //     {
+        //         CourierId = 4,
+        //         Distance = 1000,
+        //         DestinationTime = 2,
+        //         ProfileType = ProfileEnum.Driving,
+        //         FullName = "Иванов Иван Иванович"
+        //     },
+        //     new CourierGeolocation()
+        //     {
+        //         CourierId = 4,
+        //         Distance = 643.5,
+        //         DestinationTime = 7.1,
+        //         ProfileType = ProfileEnum.Walking,
+        //         FullName = "Сидоров Петр Артемович"
+        //     }
+        // };
+        IsOIPSelected = false;
+        _selectedOIPId = string.Empty;
+        IsCourierGeolocationSelected = false;
+        var result = await Mediator.Send(new GetOIPSRequest());
+        OIPS = result.oips;
+        await base.OnInitializedAsync();
+    }
+
+    private async Task CloseModal()
+    {
+        await OnLinkBtnClick.InvokeAsync(new LinkCourierWithOrderArgs
+            (false, "", "")
+        );
+    }
+
+    private async Task GetNearestCouriers()
+    {
+        int selectedOIPIdInt;
+
+        if (!int.TryParse(SelectedOIPId, out selectedOIPIdInt))
+        {
+            return;
+        }
+
+        GetNearestCouriersSubscription = HubService.Subscribe<HashSet<CourierGeolocation>>("GetNearestCouriers", (couriers) =>
+        {
+            Console.WriteLine("Handling GetNearestCouriers");
+            CourierGeolocations = couriers;
+        });
+
+        await HubService.GetNearestCouriers(selectedOIPIdInt);
+
+        if (GetNearestCouriersSubscription != null)
+            GetNearestCouriersSubscription.Dispose();
+    }
+
+    private void SelectCourierGeolocation(CourierGeolocation selectedCourierGeolocation)
+    {
+        SelectedCourierGeolocation = selectedCourierGeolocation;
+        IsCourierGeolocationSelected = true;
+    }
+
+    private async Task CommitSelect()
+    {
+        bool isLinked = false;
+        var result = await Mediator.Send(new LinkCourierWithOrderRequest(SelectedCourierGeolocation.CourierId, OrderId, DeliverySum));
+        isLinked = result.result;
+
+        if (isLinked)
+            await JS.InvokeVoidAsync("console.log", "Успешно связано");
+        else
+            await JS.InvokeVoidAsync("console.log", "Связано неудачно");
+
+        await OnLinkBtnClick.InvokeAsync(new LinkCourierWithOrderArgs
+                (false, SelectedCourierGeolocation.CourierId.ToString(), SelectedCourierGeolocation.FullName)
+            );
+    }
+}

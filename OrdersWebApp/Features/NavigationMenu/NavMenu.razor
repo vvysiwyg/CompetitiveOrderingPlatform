@@ -1,0 +1,61 @@
+﻿@using OrdersWebApp.Features.Auth
+
+<div class="navbar navbar-dark" style="background-color: rgba(0, 0, 0, 0.4);">
+    <div class="container-fluid">
+        @* <a class="navbar-brand" href="">OrdersWebApp</a> *@
+        <AccessControl />
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <AuthorizeView Roles="Operator">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <span class="oi oi-inbox" aria-hidden="true"></span> Не назначенные заказы
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/active-orders">
+                    <span class="oi oi-random" aria-hidden="true"></span> Выполняемые заказы
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/couriers">
+                <span class="oi oi-people" aria-hidden="true"></span> Курьеры
+            </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/archive">
+                    <span class="oi oi-folder" aria-hidden="true"></span> Архив заказов
+                </NavLink>
+            </div>
+        </AuthorizeView>
+        <AuthorizeView Roles="Courier">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/assigned-orders" Match="NavLinkMatch.All">
+                    <span class="oi oi-list" aria-hidden="true"></span> Назначенные заказы
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/active-orders">
+                    <span class="oi oi-random" aria-hidden="true"></span> Выполняемый заказ
+                </NavLink>
+            </div>
+        </AuthorizeView>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

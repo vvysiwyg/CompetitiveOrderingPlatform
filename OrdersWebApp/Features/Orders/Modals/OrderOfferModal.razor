@@ -1,0 +1,204 @@
+﻿@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject HubService HubService
+@inject FirebaseService FirebaseService
+@implements IAsyncDisposable
+
+@if (_currentOrderId != null)
+{
+    <div class="modal d-block" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-l">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>
+                        <span class="badge rounded-pill text-bg-primary">Новый заказ</span>
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="DeclineOrder"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <h5>
+                            <strong>№@OrderNumber</strong>
+                        </h5>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-geo-alt" viewBox="0 0 16 16">
+                                    <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10"/>
+                                    <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                                </svg>
+                            </div>
+                            <div class="ms-2">
+                                <div>
+                                    <strong>Адрес пункта выдачи</strong> 
+                                </div>
+                                <div class="opacity-50">
+                                    @PickupPoint
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-geo-alt" viewBox="0 0 16 16">
+                                    <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10"/>
+                                    <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                                </svg>
+                            </div>
+                            <div class="ms-2">
+                                <div>
+                                    <strong>Адрес доставки</strong> 
+                                </div>
+                                <div class="opacity-50">
+                                    @DeliveryAddress
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div>
+                                @DeliveryTime
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="custom-modal-footer" @onclick="AcceptOrder">
+                    <div>Принять заказ</div>
+                    <span class="timer">@_timeRemaining сек.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // TODO: заменить на данные из уведомления
+    public string OrderNumber { get; set; } = "123456";
+    public string DeliveryAddress { get; set; } = "ул. Пушкина, д. 10";
+    public string DeliveryTime { get; set; } = "7 мин.";
+    public string PickupPoint { get; set; } = "ул. Ленина, д. 2";
+
+    private int? _currentOrderId;
+    private bool _isAccepted;
+    private CancellationTokenSource _cts;
+    private int _timeRemaining = 60;
+    private Timer? _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("Setting OnFCMTokenReceived");
+        FirebaseService.OnFCMTokenReceived += SendFCMToken;
+        FirebaseService.OnNewOrderReceived += NewOrderHandle;
+        Console.WriteLine("Set OnFCMTokenReceived. Connecting to hub...");
+        Console.WriteLine("Connection established. Subscribing to handlers...");
+        SubscribeToEvents();
+        Console.WriteLine("Successfully subscribed to handlers. Sending dotNetObjRef to js...");
+        await FirebaseService.GetFCMTokenAsync();
+        Console.WriteLine("Successfully sent dotNetObjRef to js. Initializing FirebaseMessaging");
+        FirebaseService.InitializeMessageListener();
+        FirebaseService.InitializeFirebaseMessaging();
+    }
+
+    private void SendFCMToken(string fcmToken)
+    {
+        Console.WriteLine("SendFCMToken. setting token " + fcmToken);
+        HubService.SetFCMToken(fcmToken);
+    }
+
+    private async Task NewOrderHandle(int orderId)
+    {
+        // Если курьер не принял предложение и ему пришло новое предложение, то отправляем отказ
+        if (_cts != null)
+        {
+            await HubService.RespondToOrder(orderId, false);
+            return;
+        }
+
+        _isAccepted = false;
+        _cts = new CancellationTokenSource();
+        _currentOrderId = orderId;
+        StateHasChanged();
+
+        try
+        {
+            _timeRemaining = 60;
+            _timer = new Timer(_ =>
+            {
+                if (_timeRemaining > 0)
+                {
+                    _timeRemaining--;
+                    StateHasChanged();
+                }
+            }, null, 1000, 1000);
+            await Task.Delay(TimeSpan.FromMinutes(1), _cts.Token);
+
+            // Если в течение минуты курьер не отреагировал на предложение, то отправляется автоматический отказ
+            if (_currentOrderId.HasValue)
+            {
+                Console.WriteLine("В течение минуты курьер не отреагировал на предложение - отправляется автоматический отказ");
+                await HubService.RespondToOrder(_currentOrderId!.Value, false);
+                _currentOrderId = null;
+                StateHasChanged();
+                Console.WriteLine("Время ожидания истекло, заказ автоматически отменен");
+            }
+
+            // Если курьер принял заказ и не получил ответ от сервера, то на сервере уже обработан положительный ответ от другого курьера
+            if (_isAccepted)
+            {
+                Console.WriteLine("Курьер принял заказ и не получил ответ от сервера - на сервере уже обработан положительный ответ от другого курьера");
+                // Отображение поп апа с сообщением, что заказ был принят другим курьером
+                StateHasChanged();
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            StateHasChanged();
+            Console.WriteLine("Таймер отменен, курьер сделал выбор");
+        }
+        finally
+        {
+            _cts = null;
+        }
+    }
+
+    private void ShowInfoPopup(string msg)
+    {
+        Console.WriteLine($"ShowInfoPopup invoked, msg: {msg}");
+
+        Console.WriteLine("alert invoking");
+        JS.InvokeVoidAsync("alert", msg);
+        Console.WriteLine("alert invoked");
+
+        if (!_cts.IsCancellationRequested)
+            _cts.Cancel();
+        // Отображение поп апа с сообщением msg
+    }
+
+    private async Task AcceptOrder()
+    {
+        Console.WriteLine("AcceptOrder invoked");
+        await HubService.RespondToOrder(_currentOrderId!.Value, true);
+        _currentOrderId = null;
+        _isAccepted = true;
+        Console.WriteLine("Курьер принял заказ");
+    }
+
+    private async Task DeclineOrder()
+    {
+        Console.WriteLine("DeclineOrder invoked");
+        await HubService.RespondToOrder(_currentOrderId!.Value, false);
+        _currentOrderId = null;
+        _cts.Cancel();
+        Console.WriteLine("Курьер отказался от заказа");
+    }
+
+    private void SubscribeToEvents()
+    {
+        HubService.Subscribe<int>("NewOrder", (orderId => NewOrderHandle(orderId)));
+        HubService.Subscribe<string>("OrderAcceptanceConfirm", (msg => ShowInfoPopup(msg)));
+        HubService.Subscribe<string>("LateOrderAcceptanceConfirm", (msg => ShowInfoPopup(msg)));
+    }
+
+    public async ValueTask DisposeAsync() => await HubService.CloseHubConnection();
+}

@@ -1,0 +1,48 @@
+﻿@page "/authentication/{action}"
+
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.Extensions.Configuration
+@using Microsoft.AspNetCore.SignalR.Client
+@using System.Security.Claims
+
+@inject NavigationManager Navigation
+@inject IConfiguration Configuration
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject HubService HubService
+
+<RemoteAuthenticatorView Action="@Action" OnLogInSucceeded="CreateHubConnection" OnLogOutSucceeded="CloseHubConnection">
+    <LogOut>
+        @{
+            var authority = (string)Configuration["Auth0:Authority"];
+            var clientId = (string)Configuration["Auth0:ClientId"];
+
+            Navigation.NavigateTo($"{authority}/v2/logout?client_id={clientId}");
+        }
+    </LogOut>
+</RemoteAuthenticatorView>
+
+@code {
+    [Parameter] public string Action { get; set; }
+
+    private async Task CreateHubConnection()
+    {
+        string userId = string.Empty;
+        AuthenticationState? authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        ClaimsPrincipal? user = authState.User;
+
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            userId = user.FindFirst("sub")?.Value ?? string.Empty;
+        }
+
+        if (userId != string.Empty)
+            await HubService.CreateHubConnection(userId);
+        else
+            Console.WriteLine("Не удалось установить соединение с сервером т.к не удалось получить ID пользователя.");
+    }
+
+    private async Task CloseHubConnection()
+    {
+        await HubService.CloseHubConnection();
+    }
+}

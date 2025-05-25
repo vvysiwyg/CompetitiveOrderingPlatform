@@ -1,0 +1,61 @@
+﻿@page "/courier/{id:int}"
+
+<AuthorizeView>
+    <Authorized>
+        <PageTitle>Курьер @Helper.GetFullName(Courier)</PageTitle>
+
+        @if(Courier == null)
+        {
+            <p><em>Загрузка...</em></p>
+        }
+        else
+        {
+            <div class="shadow rounded">
+                <div class="row p-2">
+                    <div class="row col-4">
+                        <div class="col-4">
+                            <img src="@Courier.Emp?.Photo" alt="Аватарка курьера" class="img-fluid img-thumbnail">
+                        </div>
+                        <div class="col-8">
+                            <div>
+                                @Helper.GetFullName(Courier)
+                            </div>
+                            <div class="my-2">
+                                @Courier.Emp?.MobilePhone
+                            </div>
+                            <div>
+                                @Courier.Emp?.Email
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-8">
+                        <div class="d-flex justify-content-center">
+                            <div>
+                                <input type="month" @bind-value="SelectedStartMonth" />
+                                <input type="month" @bind-value="SelectedEndMonth" />
+                                <button class="btn" @onclick=FilterCourierHistory>Сформировать</button>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-center">
+                            <h3>
+                                @(CurrentCourierHistories?.Count != 0 ? Helper.GetTotalNumberOfSuccessOrders(CurrentCourierHistories) : 0) выполненных заказов. Это @(CurrentCourierHistories?.Count != 0 ? Helper.GetMonthlySuccessOrdersPct(CurrentCourierHistories) : 0) % от всех заказов.
+                            </h3>
+                        </div>
+                        <div class="d-flex justify-content-center">
+                            <span class="text-success">
+                                @(CurrentCourierHistories?.Count != 0 ? Helper.GetSummirizedIncome(CurrentCourierHistories).ToString("C") : 0.ToString("C"))
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="m-2">
+                    <StatusDropdownComponent CourierOrders="Courier.CourierOrders"/>
+                </div>
+            </div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <PageTitle>OrdersWebApp</PageTitle>
+        <h1>Для просмотра содержимого данной страницы необходимо авторизоваться в системе</h1>
+    </NotAuthorized>
+</AuthorizeView>

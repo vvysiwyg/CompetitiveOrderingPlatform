@@ -1,0 +1,63 @@
+﻿<EditForm EditContext="_editContext" OnValidSubmit="SubmitForm">
+    <FluentValidationValidator />
+
+    <FormSection Title="Основная информация" HelpText="">
+
+        <FormFieldSet>
+            <label for="lastname" class="font-weight-bold text-secondary">Фамилия</label>
+            <InputText @bind-Value="_courier.LastName" class="form-control" id="lastname" />
+            <ValidationMessage For="@(() => _courier.LastName)" />
+        </FormFieldSet>
+
+        <FormFieldSet>
+            <label for="firstName" class="font-weight-bold text-secondary">Имя</label>
+            <InputText @bind-Value="_courier.FirstName" class="form-control" id="firstName" />
+            <ValidationMessage For="@(() => _courier.FirstName)" />
+        </FormFieldSet>
+
+        <FormFieldSet>
+            <label for="middleName" class="font-weight-bold text-secondary">Отчество</label>
+            <InputText @bind-Value="_courier.MiddleName" class="form-control" id="middleName" />
+            <ValidationMessage For="@(() => _courier.MiddleName)" />
+        </FormFieldSet>
+
+        <FormFieldSet>
+            <label for="email" class="font-weight-bold text-secondary">Email</label>
+            <InputText @bind-Value="_courier.Email" class="form-control" id="email" />
+            <ValidationMessage For="@(() => _courier.Email)" />
+        </FormFieldSet>
+
+        <FormFieldSet>
+            <label for="phone" class="font-weight-bold text-secondary">Номер телефона</label>
+            <InputText @bind-Value="_courier.MobilePhone" class="form-control" id="phone" />
+            <ValidationMessage For="@(() => _courier.MobilePhone)" />
+        </FormFieldSet>
+
+        <FormFieldSet>
+            <label for="courierImage" class="font-weight-bold text-secondary">Фотография сотрудника</label>
+            @if (string.IsNullOrWhiteSpace(_courier.Image))
+            {
+                <InputFile OnChange="LoadCourierImage" class="form-control-file" id="courierImage" accept=".png,.jpg,.jpeg" />
+            }
+            else
+            {
+                <div class="card bg-dark text-white">
+                    <img src="@_courier.Image" />
+                    <div class="card-img-overlay">
+                        <button class="btn btn-primary btn-sm" @onclick="RemoveCourierImage">Удалить</button>
+                    </div>
+                </div>
+            }
+        </FormFieldSet>
+
+    </FormSection>
+
+    <div>
+        <div class="row justify-content-end">
+            <div class="col-auto">
+                <button class="btn btn-outline-secondary" type="button" @onclick="@(() => _courier = new CourierDto())">Сбросить</button>
+                <button class="btn btn-primary" type="submit">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</EditForm>

@@ -1,0 +1,13 @@
+﻿/*.visible {
+    width: 100%;
+}
+
+.invisible {
+    width: 0%;
+}*/
+
+.filter-bar :hover {
+    color: white;
+    background-color: rgba(var(--bs-dark-rgb),var(--bs-border-opacity)) !important;
+    cursor: pointer;
+}

@@ -1,0 +1,52 @@
+﻿@using OrdersShared.POCOs;
+@using OrdersShared.Features.Geolocation;
+
+<div class="d-flex justify-content-between align-items-center mb-2 flex-lg-row flex-column">
+    <div>@GetHumanizedProfile()</div>
+    <div>Расстояние: <b>@CourierGeolocation.Distance м.</b></div>
+    <div>Время прибытия: <b>@CourierGeolocation.DestinationTime мин.</b></div>
+    <div>
+        <a href="/courier/@CourierGeolocation.CourierId">@CourierGeolocation.FullName</a>
+    </div>
+    <div>
+        <button disabled="@IsDisabled" class="btn btn-success" @onclick="SelectCourierGeolocation">
+            <span class="@AdditionalCssClasses" aria-hidden="true"></span>Выбрать
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public CourierGeolocation CourierGeolocation { get; set; }
+
+    [Parameter, EditorRequired] public bool IsDisabled { get; set; }
+
+    [Parameter, EditorRequired] public EventCallback<CourierGeolocation> OnCourierGeolocationSelected { get; set; }
+
+    public string AdditionalCssClasses 
+    {
+        get
+        {
+            return IsDisabled ? "oi oi-check" : string.Empty;
+        }
+    }
+
+    public string GetHumanizedProfile()
+    {
+        switch (CourierGeolocation.ProfileType)
+        {
+            case ProfileEnum.Walking:
+                return "Пешком";
+            case ProfileEnum.Bike:
+                return "Велосипед, мопед, самокат";
+            case ProfileEnum.Driving:
+                return "Автомобиль";
+            default:
+                throw new Exception("Неизветсный профиль");
+        }
+    }
+
+    public void SelectCourierGeolocation()
+    {
+        OnCourierGeolocationSelected.InvokeAsync(CourierGeolocation);
+    }
+}

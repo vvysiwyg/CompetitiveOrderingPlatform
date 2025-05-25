@@ -1,0 +1,21 @@
+﻿@page "/add-courier"
+
+<PageTitle>Добавление курьера</PageTitle>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/couriers">Курьеры</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Добавление курьера</li>
+    </ol>
+</nav>
+
+@if (_submitSuccessful)
+{
+    <SuccessAlert Message="Курьер успешно добавлен в систему" />
+}
+else if (_errorMessage is not null)
+{
+    <ErrorAlert Message="@_errorMessage" />
+}
+
+<CourierForm @ref="_courierForm" OnSubmit="SubmitNewTrail" />

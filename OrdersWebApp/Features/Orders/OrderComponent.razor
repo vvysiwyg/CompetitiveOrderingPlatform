@@ -1,0 +1,17 @@
+<tr @onclick="@(e => ToOrderDetail(Order.Id))">
+    <td>
+        @Order?.Number
+    </td>
+    <td>
+        @Helper.GetFullAddress(@Order)
+    </td>
+    <td>
+        @Order?.CreationDate?.ToString("f")
+    </td>
+    <td>
+        @Order?.Sum
+    </td>
+    <td>
+        <span class="badge rounded-pill @Helper.GetStatusCssClass(Order)">@Order?.Status</span>
+    </td>
+</tr>

@@ -1,0 +1,30 @@
+﻿@page "/edit-courier/{Id:int}"
+
+<PageTitle>Изменение курьера</PageTitle>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/couriers">Курьеры</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Изменение курьера</li>
+    </ol>
+</nav>
+
+@if (_isLoading)
+{
+    <p>Загружаются данные курьера...</p>
+}
+else
+{
+    <h3 class="mt-5 mb-4">Editing trail: @_courier.LastName</h3>
+
+    @if (_submitSuccessful)
+    {
+        <SuccessAlert Message="Изменения успешно внесены" />
+    }
+    else if (_errorMessage is not null)
+    {
+        <ErrorAlert Message="@_errorMessage" />
+    }
+
+    <CourierForm Courier="_courier" OnSubmit="SubmitEditCourier" />
+}

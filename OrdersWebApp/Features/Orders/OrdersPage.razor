@@ -1,0 +1,40 @@
+@page "/{status?}" 
+
+<AuthorizeView>
+    <Authorized>
+        <PageTitle>@GetPageTitle()</PageTitle>
+
+        @if (orders == null)
+        {
+            <p><em>Загрузка...</em></p>
+        }
+        else
+        {
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Номер заказа</th>
+                        <th>Адрес доставки</th>
+                        <th>Дата создания заказа</th>
+                        <th>Сумма (руб.)</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in orders)
+                    {
+                        <OrderComponent Order="order" />
+                    }
+                    @* @foreach (var order in TestOrders)
+                    {
+                        <OrderComponent Order="order" />
+                    } *@
+                </tbody>
+            </table>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <PageTitle>OrdersWebApp</PageTitle>
+        <h1>Для просмотра содержимого данной страницы необходимо авторизоваться в системе</h1>
+    </NotAuthorized>
+</AuthorizeView>

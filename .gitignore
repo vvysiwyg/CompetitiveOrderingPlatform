@@ -1,0 +1,102 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+out/
+
+# Rider
+.idea/
+
+# ASP.NET Core publish output
+publish/
+wwwroot/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/packages/
+.nuget/metadata/
+.nuget/cache/
+.nuget/plugins-cache/
+
+# Blazor specific
+wwwroot/_framework/
+wwwroot/_content/
+
+# Debugging files
+*.pdb
+*.mdb
+
+# Log files
+*.log
+
+# IIS
+iisexpress/
+
+# Rider, VS Code
+.vscode/
+
+# npm packages (если используется npm для фронтенда)
+node_modules/
+
+# Yarn
+.yarn/
+
+# dotenv environment variables file
+.env
+
+# MacOS
+.DS_Store
+
+# Linux
+*~
+
+# JetBrains Rider
+.idea/
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# User-specific files
+*.suo
+*.user
+*.userprefs
+
+# ASP.NET Core specific
+
+# User secrets (хранятся вне репозитория)
+secrets.json
+
+# Entity Framework Core Migrations
+Migrations/
+
+# EF Core Design-Time files
+*.efcore.*
+
+# appsettings.json может содержать секреты, но часто включается. Если хочешь игнорировать локальные конфиги, добавь:
+appsettings.Development.json
+
+# Kestrel https development certificate
+https/
+
+# Logs and diagnostics
+logs/
+*.log
+
+# Docker (если используешь)
+docker-compose.override.yml
+docker-compose.*.yml
+
+# Publish output folder (если используется нестандартный)
+publish/
+
+# Swagger UI generated files (если генерируются)
+swagger/
+

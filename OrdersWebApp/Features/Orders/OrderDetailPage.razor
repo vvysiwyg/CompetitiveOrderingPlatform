@@ -1,0 +1,152 @@
+@page "/order/{id:int}"
+@using OrdersWebApp.Features.Couriers
+@using OrdersWebApp.Features.Couriers.Modals.CourierSelectModal
+
+<AuthorizeView>
+    <Authorized>
+        <PageTitle>Заказ @Order?.Number</PageTitle>
+
+        <div class="shadow rounded">
+            <div class="row justify-content-between align-items-center p-3">
+                <div class="col">
+                    <div>Номер заказа: @Order?.Number</div>
+                    <div class="text-muted">@Order?.CreationDate?.ToString("D")</div>
+                    <div>
+                        <span class="badge @Helper.GetStatusCssClass(Order) rounded-pill">@Order?.Status</span>
+                    </div>
+                </div>
+                <div class="col">
+                    @if (Order?.Status == "Не назначен")
+                    {
+                        <div>
+                            @* <CourierSelectComponent OrderId="Id" IsOpen="_isOpen" OnLinkBtnClick="OpenOrCloseCourierSelectDialog"></CourierSelectComponent> *@
+                            <button class="btn btn-primary" @onclick="@(() => OpenOrCloseCourierSelectDialog(new LinkCourierWithOrderArgs(true, "", "")))">Назначить курьера</button>
+                            @* <button class="btn btn-primary" @onclick="@(() => OpenOrCloseCourierSelectDialog(new LinkCourierWithOrderArgs(true, "", "")))">Назначить курьера old</button> *@
+                            @if (!string.IsNullOrWhiteSpace(SelectedCourierId))
+                            {
+                                <a class="ms-2 link-offset-2" href="/courier/@SelectedCourierId">@SelectedCourierFullName</a>
+                                <button @onclick="UnlinkCourierWithOrder" class="btn btn-link">
+                                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-x-circle-fill text-danger" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z" />
+                                </svg>
+                            </button>
+                            }
+                            @if (_isOpen)
+                            {
+                                <CourierSelectModal OrderId="Id" OnLinkBtnClick="OpenOrCloseCourierSelectDialog"></CourierSelectModal>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+            <hr>
+            <div class="p-3">
+                <div class="row mb-5">
+                    <div class="row col">
+                        <div class="col-1">
+                            <span class="p-2 oi oi-person rounded-circle border border-2 border-dark"></span>
+                        </div>
+                        <div class="col">
+                            <h3>Клиент</h3>
+                            <div>
+                                <span class="text-muted">ФИО: </span> @Helper.GetFullName(Order?.Customer)
+                            </div>
+                            <div>
+                                <span class="text-muted">Номер телефона: </span> @Helper.GetFormattedPhoneNumber(Order?.Customer?.Phone)
+                            </div>
+                            <div>
+                                <span class="text-muted">Email </span> @Order?.Customer?.Email
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row col">
+                        <div class="col-1">
+                            <span class="p-2 oi oi-box rounded-circle border border-2 border-dark"></span>
+                        </div>
+                        <div class="col">
+                            <h3>Доставка</h3>
+                            <div>
+                                <span class="text-muted">Адрес: </span> @Helper.GetFullAddress(Order)
+                            </div>
+                            <div>
+                                <span class="text-muted">Дата: </span> @Order?.Delivery?.Date?.ToString("D")
+                            </div>
+                            <div>
+                                @if (Order?.Delivery?.CallInHour ?? false)
+                                {
+                                    <span class="fw-bold">Позвонить за час до прибытия к клиенту</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row col">
+                        <div class="col-1">
+                            <span class="p-2 oi oi-credit-card rounded-circle border border-2 border-dark"></span>
+                        </div>
+                        <div class="col">
+                            <h3>Оплата</h3>
+                            <div>
+                                <span class="text-muted">Способ оплаты: </span> @Order?.PaymentType
+                            </div>
+                            <div>
+                                <span class="text-muted">Вид клиента: </span> @Order?.Customer?.CustomerType
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row col">
+                        <div class="col-1">
+                            <span class="p-2 oi oi-comment-square rounded-circle border border-2 border-dark"></span>
+                        </div>
+                        <div class="col">
+                            <h3>Комментарий клиента</h3>
+                            <textarea class="form-control" disabled> @Order?.Delivery?.Commentary </textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="p-3">
+                <table class="table">
+                    <tbody>
+                        @if (Order?.OrderDetailProducts is not null)
+                        {
+                            @foreach (var orderProduct in Order.OrderDetailProducts)
+                            {
+                                <tr>
+                                    <td>@orderProduct?.Product?.Name</td>
+                                    <td>@orderProduct?.Qty x</td>
+                                    <td>@orderProduct?.Product?.Price руб.</td>
+                                    <td>@Helper.GetProductSum(orderProduct) руб.</td>
+                                </tr>
+                            }
+                        }
+                        @if (Order?.OrderDetailServices is not null)
+                        {
+                            @foreach (var orderService in Order.OrderDetailServices)
+                            {
+                                <tr>
+                                    <td>@orderService?.Service?.Name</td>
+                                    <td>@orderService?.Qty x</td>
+                                    <td>@orderService?.Service?.Price руб.</td>
+                                    <td>@Helper.GetServiceSum(orderService) руб.</td>
+                                </tr>
+                            }
+                        }
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td class="fw-bold">Всего @Order?.Sum руб.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <PageTitle>OrdersWebApp</PageTitle>
+        <h1>Для просмотра содержимого данной страницы необходимо авторизоваться в системе</h1>
+    </NotAuthorized>
+</AuthorizeView>
