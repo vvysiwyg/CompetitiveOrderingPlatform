@@ -4,15 +4,16 @@
 
 ## Стек технологий
 
-Языки программирования: C# + js
-UI фреймворк для клиента: Blazor web assembly
-Сервер: ASP.NET web api
-ORM: Entity Framework
-СУБД: PostgreSQL
-MediatR 
-Ardalis.ApiEndpoints
-FluentValidation для валидации полей в форме
-SignalR для переодической передачи геопозиции курьера на сервер
+- Языки программирования: C# + js
+- UI фреймворк для клиента: Blazor web assembly
+- Сервер: ASP.NET web api
+- ORM: Entity Framework
+- СУБД: PostgreSQL
+- MediatR 
+- Ardalis.ApiEndpoints
+- FluentValidation для валидации полей в форме
+- SignalR для переодической передачи геопозиции курьера на сервер
+
 Также используются внешние сервисы: Auth0 (аутентификация, авторизация, ролевая модель), Firebase cloud messaging (уведомления), OSRM API (вычисление кратчайшего пути между двумя точками)
 
 ## Архитектура
